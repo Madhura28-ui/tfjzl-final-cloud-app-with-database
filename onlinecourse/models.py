@@ -11,11 +11,10 @@ except Exception:
 from django.conf import settings
 
 
-# Instructor model
 class Instructor(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     full_time = models.BooleanField(default=True)
     total_learners = models.IntegerField()
@@ -24,11 +23,10 @@ class Instructor(models.Model):
         return self.user.username
 
 
-# Learner model
 class Learner(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
 
     STUDENT = 'student'
@@ -44,7 +42,6 @@ class Learner(models.Model):
     ]
 
     occupation = models.CharField(
-        null=False,
         max_length=20,
         choices=OCCUPATION_CHOICES,
         default=STUDENT
@@ -56,10 +53,8 @@ class Learner(models.Model):
         return self.user.username + "," + self.occupation
 
 
-# Course model
 class Course(models.Model):
     name = models.CharField(
-        null=False,
         max_length=30,
         default='online course'
     )
@@ -78,7 +73,6 @@ class Course(models.Model):
         return "Name: " + self.name + ",Description: " + self.description
 
 
-# Lesson model
 class Lesson(models.Model):
     title = models.CharField(max_length=200, default="title")
     order = models.IntegerField(default=0)
@@ -89,7 +83,6 @@ class Lesson(models.Model):
         return self.title
 
 
-# Enrollment model
 class Enrollment(models.Model):
     AUDIT = 'audit'
     HONOR = 'honor'
@@ -118,17 +111,33 @@ class Enrollment(models.Model):
         return self.user.username + " - " + self.course.name
 
 
-# Question model
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     question_text = models.CharField(max_length=200)
-    grade = models.IntegerField(default=50)
+    grade = models.IntegerField(default=1)
+
+    def is_get_score(self, selected_ids):
+        correct_ids = set(
+            self.choice_set.filter(
+                is_correct=True
+            ).values_list('id', flat=True)
+        )
+
+        selected_question_ids = set(
+            self.choice_set.filter(
+                id__in=selected_ids
+            ).values_list('id', flat=True)
+        )
+
+        return (
+            len(correct_ids) > 0
+            and correct_ids == selected_question_ids
+        )
 
     def __str__(self):
         return self.question_text
 
 
-# Choice model
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     choice_text = models.CharField(max_length=200)
@@ -138,7 +147,6 @@ class Choice(models.Model):
         return self.choice_text
 
 
-# Submission model
 class Submission(models.Model):
     enrollment = models.ForeignKey(
         Enrollment,
@@ -147,5 +155,5 @@ class Submission(models.Model):
     choices = models.ManyToManyField(Choice)
 
     def __str__(self):
-        return "Submission by " + self.enrollment.user.username
+        return str(self.enrollment)
 ```
