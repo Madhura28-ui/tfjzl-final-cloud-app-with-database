@@ -200,6 +200,7 @@ def submit(request, course_id):
     )
 
 
+```python
 @login_required
 def show_exam_result(request, course_id, submission_id):
     course = get_object_or_404(
@@ -232,6 +233,44 @@ def show_exam_result(request, course_id, submission_id):
     for question in questions:
         possible += question.grade
 
-        # Use the required model method to calculate the score.
-        if question.
+        is_correct = question.is_get_score(selected_ids)
+
+        if is_correct:
+            grade += question.grade
+
+        correct_ids = list(
+            question.choice_set.filter(
+                is_correct=True
+            ).values_list('id', flat=True)
+        )
+
+        question_selected_ids = list(
+            question.choice_set.filter(
+                id__in=selected_ids
+            ).values_list('id', flat=True)
+        )
+
+        question_results.append({
+            'question': question,
+            'selected_ids': question_selected_ids,
+            'correct_ids': correct_ids,
+            'is_correct': is_correct,
+            'grade': question.grade
+        })
+
+    context = {
+        'course': course,
+        'submission': submission,
+        'selected_ids': selected_ids,
+        'grade': grade,
+        'possible': possible,
+        'question_results': question_results
+    }
+
+    return render(
+        request,
+        'onlinecourse/exam_result_bootstrap.html',
+        context
+    )
 ```
+
