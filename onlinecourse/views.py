@@ -36,7 +36,9 @@ def registration_request(request):
         first_name = request.POST['firstname']
         last_name = request.POST['lastname']
 
-        user_exist = User.objects.filter(username=username).exists()
+        user_exist = User.objects.filter(
+            username=username
+        ).exists()
 
         if not user_exist:
             user = User.objects.create_user(
@@ -170,8 +172,6 @@ def submit(request, course_id):
             enrollment=enrollment
         )
 
-        selected_answers = []
-
         for key in request.POST:
             if key.startswith('choice'):
                 for value in request.POST.getlist(key):
@@ -184,7 +184,6 @@ def submit(request, course_id):
                         )
 
                         submission.choices.add(choice)
-                        selected_answers.append(choice_id)
 
                     except (ValueError, Choice.DoesNotExist):
                         continue
@@ -203,7 +202,10 @@ def submit(request, course_id):
 
 @login_required
 def show_exam_result(request, course_id, submission_id):
-    course = get_object_or_404(Course, pk=course_id)
+    course = get_object_or_404(
+        Course,
+        pk=course_id
+    )
 
     submission = get_object_or_404(
         Submission,
@@ -213,62 +215,23 @@ def show_exam_result(request, course_id, submission_id):
     )
 
     selected_ids = list(
-        submission.choices.values_list('id', flat=True)
+        submission.choices.values_list(
+            'id',
+            flat=True
+        )
     )
 
     grade = 0
     possible = 0
     question_results = []
 
-    questions = Question.objects.filter(course=course)
+    questions = Question.objects.filter(
+        course=course
+    )
 
     for question in questions:
         possible += question.grade
 
-        correct_choices = question.choice_set.filter(
-            is_correct=True
-        )
-
-        selected_choices = question.choice_set.filter(
-            id__in=selected_ids
-        )
-
-        correct_ids = set(
-            correct_choices.values_list('id', flat=True)
-        )
-
-        question_selected_ids = set(
-            selected_choices.values_list('id', flat=True)
-        )
-
-        is_correct = (
-            correct_ids == question_selected_ids
-            and len(correct_ids) > 0
-        )
-
-        if is_correct:
-            grade += question.grade
-
-        question_results.append({
-            'question': question,
-            'selected_ids': list(question_selected_ids),
-            'correct_ids': list(correct_ids),
-            'is_correct': is_correct,
-            'grade': question.grade
-        })
-
-    context = {
-        'course': course,
-        'submission': submission,
-        'selected_ids': selected_ids,
-        'grade': grade,
-        'possible': possible,
-        'question_results': question_results
-    }
-
-    return render(
-        request,
-        'onlinecourse/exam_result_bootstrap.html',
-        context
-    )
+        # Use the required model method to calculate the score.
+        if question.
 ```
